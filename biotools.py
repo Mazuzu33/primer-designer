@@ -14,7 +14,7 @@ def calcMeltTempPrimer(seq):
         else:
             numC += 1
     # Calculate the melting temperature differently based on the size of the strand
-    if (len(strand) <= 13):
+    if (len(seq) <= 13):
         meltTemp = (numA + numT) * 2 + (numG + numC) * 4
     else:
         meltTemp = 64.9 + 41 * (numG + numC - 16.4) / (len(seq))
@@ -36,6 +36,7 @@ def calcGCClamp(seq):
         if (seq[i] == "G" or seq[i] == "C"):
             numGC += 1
     return numGC
+
 
 
 
