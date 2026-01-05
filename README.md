@@ -1,1 +1,1 @@
-# primer_finder
+# primer-designer
