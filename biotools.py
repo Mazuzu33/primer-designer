@@ -21,7 +21,6 @@ def calcMeltTemp(strand):
         meltTemp = 64.9 + 41 * (numG + numC - 16.4) / (numA + numT + numG + numC)
 
 def calcGCContent(strand):
-    # Count the number of G's and C's
     numG = 0
     numC = 0
     numNuc = 0
@@ -32,6 +31,15 @@ def calcGCContent(strand):
             numC += 1
         numNuc += 1
     return (numG + numC) / numNuc * 100
+
+def calcGCClamp(strand):
+    # Count the number of G's and C's in the last five nucleotides
+    numGC = 0
+    for i in range(-5, 0):
+        if (strand[i] == "G" or strand[i] == "C"):
+            numGC += 1
+    return numGC
+
 
     
 
