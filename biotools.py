@@ -13,24 +13,21 @@ def calcMeltTemp(strand):
             numG += 1
         else:
             numC += 1
-    numNuc = numA + numT + numG + numC
     # Calculate the melting temperature differently based on the size of the strand
-    if (numNuc <= 13):
+    if (len(strand) <= 13):
         meltTemp = (numA + numT) * 2 + (numG + numC) * 4
     else:
-        meltTemp = 64.9 + 41 * (numG + numC - 16.4) / (numA + numT + numG + numC)
+        meltTemp = 64.9 + 41 * (numG + numC - 16.4) / (len(strand))
 
 def calcGCContent(strand):
     numG = 0
     numC = 0
-    numNuc = 0
     for letter in strand:
         if (letter == "G"):
             numG += 1
         elif (letter == "C"):
             numC += 1
-        numNuc += 1
-    return (numG + numC) / numNuc * 100
+    return (numG + numC) / len(strand) * 100
 
 def calcGCClamp(strand):
     # Count the number of G's and C's in the last five nucleotides
@@ -39,6 +36,7 @@ def calcGCClamp(strand):
         if (strand[i] == "G" or strand[i] == "C"):
             numGC += 1
     return numGC
+
 
 
     
