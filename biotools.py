@@ -1,3 +1,5 @@
+import datastructures as ds
+
 def calcMeltTempPrimer(seq):
     # Count the number of different nucleotides
     numA = 0
@@ -61,11 +63,46 @@ def calcScoreHairpin(hairpin):
         minLenStem = len(hairpin.stem2)
     # Check the number of base pair matches and mismatches
     for i in range(minLenStem):
-        if (getCompBase(hairpin.stem1[i]) == hairpin.stem2[i]):
+        # Reverse the order of one stem in order to align it with the other
+        revStem1 = hairpin.stem1[::-1]
+        if (getCompBase(revStem1[i]) == hairpin.stem2[i]):
             score += 1
         else:
             score -= 1
     return score
+
+def createPossHairpins(seq):
+    '''
+    Finds possible hairpins that can form from a given sequence. A minimum stem length of two was chosen as well as a loop size 
+    between 4 and 5 bases based on real world data. These hairpins are then found using a basic sliding window algorithm.
+
+    seq: A DNA sequence (str)
+    Returns: A list of Hairpin objects (Hairpin)
+    '''
+    minStemLength = 2
+    minLoopSize = 4
+    possHairpins = []
+    # Create initial hairpin
+    stem1 = seq[0:minStemLength]
+    loop = seq[minStemLength: minStemLength + minLoopSize]
+    stem2 = seq[minStemLength + minLoopSize:]
+    possHairpins.append(ds.Hairpin(stem1, loop, stem2))
+    while (len(stem2) >= minStemLength):
+        if (len(loop) == minLoopSize):
+            # Add a base to the loop
+            loop += stem2[0]
+            # Take off the first base of stem2
+            stem2 = stem2[1:]
+        else:
+            # Add a base to stem1
+            stem1 += loop[0]
+            # Take off the first base of loop
+            loop = loop[1:]
+        # Add hairpin to list
+        possHairpins.append(ds.Hairpin(stem1, loop, stem2))
+    return possHairpins
+
+
 
 
 

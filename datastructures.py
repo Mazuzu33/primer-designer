@@ -12,3 +12,4 @@ class Hairpin:
     stem1: str
     loop: str
     stem2: str
+
