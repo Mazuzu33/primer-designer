@@ -1,6 +1,6 @@
 import datastructures as ds
 
-def calcMeltTempPrimer(seq):
+def calcMeltTempSeq(seq):
     # Count the number of different nucleotides
     numA = 0
     numT = 0
@@ -38,6 +38,7 @@ def calcGCInClamp(seq):
         if (seq[i] == "G" or seq[i] == "C"):
             numGC += 1
     return numGC
+
 
 def getCompBase(base):
     if (base == "A"):
