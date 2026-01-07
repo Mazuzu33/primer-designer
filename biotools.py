@@ -20,6 +20,7 @@ def calcMeltTempSeq(seq):
         meltTemp = (numA + numT) * 2 + (numG + numC) * 4
     else:
         meltTemp = 64.9 + 41 * (numG + numC - 16.4) / (len(seq))
+    return meltTemp
 
 def calcGCContent(seq):
     numG = 0
@@ -39,6 +40,32 @@ def calcGCInClamp(seq):
             numGC += 1
     return numGC
 
+def calcMaxVocab(alphaSize, wordLen):
+    '''
+    Helper function for calculating linguistic complexity
+
+    alphaSize: The amount of letters in the alphabet
+    wordLen: The length of the word
+    Returns: The maximum vocabulary of words of length 1 to m that can be formed by taking substrings of a word of wordLen
+    ''' 
+    maxVocab = 0
+    # Calculate the maximum vocabulary of words of length i
+    for i in range(1, wordLen + 1):
+        # Represents the max number of unique words of length i with regards to the alphabet. 
+        val1 = alphaSize ** i
+        # Represents the max number of unique words of length i that can be obtained by taking substrings of a word of wordLen. 
+        # Invalid when wordLen > alphaSize
+        val2 = wordLen - i + 1
+        # Choose the minimum of the two values
+        maxVocab += min(val1, val2)
+    return maxVocab
+
+def calcLinComp(seq):
+    '''
+    Calculates the linguistic complexity of a sequence
+    
+    seq: A DNA sequence (string)
+    '''
 
 def getCompBase(base):
     if (base == "A"):
@@ -102,7 +129,6 @@ def createPossHairpins(seq):
         # Add hairpin to list
         possHairpins.append(ds.Hairpin(stem1, loop, stem2))
     return possHairpins
-
 
 
 
