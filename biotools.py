@@ -44,9 +44,9 @@ def calcMaxVocab(alphaSize, wordLen):
     '''
     Helper function for calculating linguistic complexity
 
-    alphaSize: The amount of letters in the alphabet
-    wordLen: The length of the word
-    Returns: The maximum vocabulary of words of length 1 to m that can be formed by taking substrings of a word of wordLen
+    alphaSize: The amount of letters in the alphabet (int)
+    wordLen: The length of the word (int)
+    Returns: The maximum vocabulary of words of length 1 to m that can be formed by taking substrings of a word of wordLen (int)
     ''' 
     maxVocab = 0
     # Calculate the maximum vocabulary of words of length i
@@ -62,10 +62,16 @@ def calcMaxVocab(alphaSize, wordLen):
 
 def calcLinComp(seq):
     '''
-    Calculates the linguistic complexity of a sequence
+    Calculates the linguistic complexity (LC) of a sequence where LC is defined as the ratio of the number of substrings of any
+    length in the given sequence to the maximum possible number of substrings obtainable from a sequence of the given sequence's length. 
     
     seq: A DNA sequence (string)
     '''
+    trie = ds.SuffixTrie()
+    trie.addSuffixes(seq)
+    uniqueSubWords = trie.getEdges()
+    maxVocab = calcMaxVocab(4, len(seq))
+    return uniqueSubWords / maxVocab
 
 def getCompBase(base):
     if (base == "A"):
