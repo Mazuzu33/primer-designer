@@ -105,6 +105,50 @@ def calcScoreHairpin(hairpin):
             score -= 1
     return score
 
+def calcLoopGibbs(hairpin):
+    '''
+    Helper method for calculating the Gibbs free energy of a hairpin. Uses the nearest neighbor (NN) method.
+    
+    hairpin: A Hairpin object (Hairpin)
+    Returns: The loop's Gibbs free energy contribution (int)
+    '''
+    G = 0
+    # Dictionary describing the contribution of each possible nearest-neighbor pair in a loop towards the Gibbs free energy in kcal/mol
+    nnLoopContribution = {"AA": 1.4, "TA": 1.2, "GA": 0.1, "CA": 0.4, "AT": 1.5, "TT": 1.0, "GT": 0.9, "CT": 0.2, "AG": 2.4, "TG": 1.7, 
+                      "GG": 1.2, "CG": 0.0, "AC": 2.4, "TC": 1.9, "GC": 1.5, "CC": 1.0}
+    # Combines the loop sequence with the base surrounding it on each side
+    combinedSeq = hairpin.stem1[-1] + hairpin.loop + hairpin.stem2[0]
+    for i in range(len(combinedSeq) - 1):
+        G += nnLoopContribution[combinedSeq[i:i+2]]
+    return G
+
+def calcStemGibbs(hairpin):
+    '''
+    Helper method for calculating the Gibbs free energy of a hairpin. Uses the nearest neighbor (NN) method.
+    
+    hairpin: A Hairpin object (Hairpin)
+    Returns: The stem's Gibbs free energy contribution (int)
+    '''
+    G = 0
+    # Dictionary describing the contribution of each possible nearest-neighbor pair in a duplex towards the Gibbs free energy in kcal/mol
+    nnStemContribution = {"AA/TT": -1.00, "TA/AT": -0.58, "GA/CT": -1.30, "CA/GT": -1.45, "AT/TA": -0.88, "TT/AA": -1.00,  "GT/CA": -1.44, "CT/GA": -1.28,
+                        "AG/TC": -1.28, "TG/AC": -1.45, "GG/CC": -1.84, "CG/GC": -2.17, "AC/TG": -1.44,  "TC/AG": -1.30, "GC/CG": -2.24,  "CC/GG": -1.84}
+    # Get the shortest stem length
+    if (len(hairpin.stem1) < len(hairpin.stem2)):
+        minLenStem = len(hairpin.stem1)
+    else:
+        minLenStem = len(hairpin.stem2)
+    # Reverse the order of one stem in order to align it with the other
+    revStem1 = hairpin.stem1[::-1]
+    for i in range(minLenStem - 1):
+        #Check if there is a mismatch anmd if so, assess a penalty of .438 kcal/mol
+        if (getCompBase(revStem1[i]) != hairpin.stem2[i] or getCompBase(hairpin.stem2[i+1] != hairpin.stem2[i+1])):
+            G += .438
+        else:
+            stemPair = (revStem1[i:i+1] + "/" + hairpin.stem2[i:i+1])
+            G += nnStemContribution[stemPair]
+    return G
+
 def createPossHairpins(seq):
     '''
     Finds possible hairpins that can form from a given sequence. A minimum stem length of two was chosen as well as a loop size 
