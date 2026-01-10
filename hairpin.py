@@ -24,7 +24,7 @@ class Hairpin:
     loop: A string representing the DNA bases of the loop of a hairpin
     stem2: A string representing the DNA bases from the end of the loop (exclusive) to the 3' end of a hairpin
     """
-    def __init__self(self, stem1, loop, stem2):
+    def __init__(self, stem1, loop, stem2):
         self.stem1 = stem1
         self.loop = loop
         self.stem2 = stem2
@@ -47,6 +47,7 @@ def calcScoreHairpin(hairpin):
     hairpin: A DNA hairpin (Hairpin)
     Returns: A score representing the number of matches minus the number of mismatches in the stem (int)
     '''
+    score = 0
     # Get the shortest stem length
     minLen = hairpin.getShortestStemLen()
     # Check the number of base pair matches and mismatches
@@ -93,7 +94,7 @@ def calcStemGibbs(hairpin):
             G += mismatchPenalty
         # Otherwise add the NN pair's Gibbs free energy contribution
         else:
-            duplexPair = (revStem1[i:i+1] + "/" + hairpin.stem2[i:i+1])
+            duplexPair = (revStem1[i:i+2] + "/" + hairpin.stem2[i:i+2])
             G += nnDuplexContributions[duplexPair]
     return G
 
@@ -103,15 +104,15 @@ def calcHairGibbs(hairpin):
     
     hairpin: A Hairpin object (Hairpin)
     '''
+    G = 0
     # Reverse the order of one stem in order to align it with the other
     revStem1 = hairpin.stem1[::-1]
-    #Obtain the terminal pairs at both ends of the stem duplex
+    #Obtain the terminal pair at the end of the stem duplex corresponding to the beginning of the loop
     minLen = hairpin.getShortestStemLen()
     termPair = revStem1[0] + "/" + hairpin.stem2[0]
     # Check for G/C or A/T pairs and add appropriate initiation paramater
-    if (termPair == "G/C" or termPair == "C/G") {
+    if (termPair == "G/C" or termPair == "C/G"):
         G += termGC
-    }
     elif (termPair == "A/T" or termPair == "T/A"):
         G += termAT
     else:
@@ -131,12 +132,15 @@ def createPossHairpins(seq):
     minStemLength = 2
     minLoopSize = 4
     possHairpins = []
+    # No hairpins possible if sequence is smaller than 8 bp
+    if (len(seq) < 8):
+        return possHairpins
     # Create initial hairpin
     stem1 = seq[0:minStemLength]
     loop = seq[minStemLength: minStemLength + minLoopSize]
     stem2 = seq[minStemLength + minLoopSize:]
     possHairpins.append(Hairpin(stem1, loop, stem2))
-    while (len(stem2) >= minStemLength):
+    while (len(stem2) > minStemLength or len(loop) > minLoopSize):
         if (len(loop) == minLoopSize):
             # Add a base to the loop
             loop += stem2[0]
