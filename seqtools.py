@@ -26,4 +26,6 @@ def getRevSeq(seq):
     
 def checkPalindromicSeq(seq):
     return(getCompSeq(seq) == getRevSeq(seq))
+
+
             
