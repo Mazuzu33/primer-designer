@@ -13,9 +13,9 @@ class Hairpin:
         self.stem1 = stem1
         self.loop = loop
         self.stem2 = stem2
+        self.revStem1 = stem1[::-1]
         self.minStemLen = self.getMinStemLen()
         self.stemPairs = self.getStemPairs()
-        self.revStem1 = stem1[::-1]
         self.score = self.calcScoreHairpin()
         self.loopGibbs = self.calcLoopGibbs()
         self.mismatchGibbs = self.calcMismatchGibbs()
@@ -25,6 +25,8 @@ class Hairpin:
         self.stemEntropy = self.calcStemEntropy()
         self.loopEntropy = self.calcLoopEntropy()
         self.mismatchEnthalpy = self.calcMismatchEnthalpy()
+        self.hairEnthalpy = self.stemEnthalpy + self.mismatchEnthalpy
+        self.hairEntropy = self.stemEntropy + self.loopEntropy
         self.meltingTemperature = self.calcMeltingTemperature()
 
     def getMinStemLen(self):
@@ -45,7 +47,7 @@ class Hairpin:
         # Iterate through possible NN pairs
         for i in range(hairpin.minStemLen - 1):
             #Check that there are no mismatches
-            if (st.getCompBase(hairpin.revStem1[i]) == hairpin.stem2[i] or st.getCompBase(hairpin.revStem1[i+1]) == hairpin.stem2[i+1]):
+            if (st.getCompBase(hairpin.revStem1[i]) == hairpin.stem2[i] and st.getCompBase(hairpin.revStem1[i+1]) == hairpin.stem2[i+1]):
                 duplexPair = hairpin.revStem1[i:i+2] + "/" + hairpin.stem2[i:i+2]
                 nnPairs.append(duplexPair)
         return nnPairs
@@ -110,9 +112,9 @@ class Hairpin:
             G += nn.duplexPairToG[nnPair]
         # End correction based on the pair at the end of the stem and at the beginning of the loop
         # Checks that the base pair is matched correctly first
-        if (st.getCompBase(hairpin.stem1[-1]) == hairpin.stem2[0]):
+        if (st.getCompBase(hairpin.revStem1[0]) == hairpin.stem2[0]):
             # Add end correction based on the identity of pair
-            if (hairpin.stem1 == "G" or hairpin.stem1 == "C"):
+            if (hairpin.revStem1[0] == "G" or hairpin.revStem1[0] == "C"):
                 G += nn.stemTermgcAmtG
             else:
                 G += nn.stemTermatAmtG
@@ -125,7 +127,7 @@ class Hairpin:
         hairpin: A Hairpin object (Hairpin)
         '''
         # Add in Gibbs free energy calculations for the stem and loop and mismatches
-        G += hairpin.stemGibbs + hairpin.loopGibbs + hairpin.mismatchGibbs
+        G = hairpin.stemGibbs + hairpin.loopGibbs + hairpin.mismatchGibbs
         return G
     
     def calcStemEnthalpy(hairpin):
@@ -143,13 +145,13 @@ class Hairpin:
             H += nn.duplexPairToH[nnPair]
         # End correction based on the pairs at the end of the stem
         # Calculate number of terminating GC and AT pairs
-        if (st.getComp(hairpin.revStem1[0]) == hairpin.stem2[0]):
+        if (st.getCompBase(hairpin.revStem1[0]) == hairpin.stem2[0]):
             if (hairpin.revStem1[0] == "G" or hairpin.revStem1[0] == "C"):
                 termgc += 1
             else:
                 termat += 1
-        if (st.getCompBase(hairpin.revStem1[hairpin.minStemLen]) == hairpin.stem2[hairpin.minStemLen]):
-            if (hairpin.revStem1[hairpin.minStemLen] == "G" or hairpin.revStem1[hairpin.minStemLen] == "C"):
+        if (st.getCompBase(hairpin.revStem1[hairpin.minStemLen-1]) == hairpin.stem2[hairpin.minStemLen-1]):
+            if (hairpin.revStem1[hairpin.minStemLen-1] == "G" or hairpin.revStem1[hairpin.minStemLen-1] == "C"):
                 termgc += 1
             else:
                 termat += 1
@@ -164,10 +166,12 @@ class Hairpin:
         hairpin: A Hairpin object (Hairpin)
         Returns: The stem's entropy contribution (int)
         '''
+        termat = 0
+        termgc = 0
         S = 0
         # Iterate through the valid NN pairs
         for nnPair in hairpin.stemPairs:
-            S += st.nnDuplexSContributions[nnPair]
+            S += nn.duplexPairToS[nnPair]
         # End correction based on the pairs at the end of the stem
         # Calculate number of terminating GC and AT pairs
         if (st.getCompBase(hairpin.revStem1[0]) == hairpin.stem2[0]):
@@ -175,13 +179,14 @@ class Hairpin:
                 termgc += 1
             else:
                 termat += 1
-        if (st.getComp(hairpin.revStem1[hairpin.minStemLen]) == hairpin.stem2[hairpin.minStemLen]):
-            if (hairpin.revStem1[hairpin.minStemLen] == "G" or hairpin.revStem1[hairpin.minStemLen] == "C"):
+        if (st.getCompBase(hairpin.revStem1[hairpin.minStemLen-1]) == hairpin.stem2[hairpin.minStemLen-1]):
+            if (hairpin.revStem1[hairpin.minStemLen-1] == "G" or hairpin.revStem1[hairpin.minStemLen-1] == "C"):
                 termgc += 1
             else:
                 termat += 1
         # Add end correction based on the identity of pairs
         S += termgc * nn.duplexTermgcAmtS + termat * nn.duplexTermatAmtS
+        return S
 
     def calcLoopEntropy(hairpin):
         '''
@@ -190,14 +195,15 @@ class Hairpin:
         :param hairpin: Description
         '''
         # Add in the free energy contributed by the loop
-        G = hairpin.stemGibbs + hairpin.loopGibbs
+        Gold = hairpin.stemGibbs
+        Gnew = hairpin.stemGibbs + hairpin.loopGibbs
         H = hairpin.stemEnthalpy
-        S = hairpin.stemEntropy
         T = 310
         # Adjust S appropriately to account for the change in free energy
-        Snew = (H - G)/T
+        Sold = (H - Gold)/T
+        Snew = (H - Gnew)/T
         # Get the contribution to entropy by the loop itself
-        return Snew - S
+        return Snew - Sold
     
     def calcMismatchEnthalpy(hairpin):
         '''
@@ -206,20 +212,21 @@ class Hairpin:
         :param hairpin: Description
         '''
         # Add in the free energy contributed by the mismatches
-        G = hairpin.stemGibbs + hairpin.mismatchGibbs
-        H = hairpin.stemEnthalpy
+        Gold = hairpin.stemGibbs
+        Gnew = hairpin.stemGibbs + hairpin.mismatchGibbs
         S = hairpin.stemEntropy
         T = 310
         # Adjust H appropriately to account for the change in free energy
-        Hnew = G + T*S
-        # Get the contribution to enthalpy by the mismatcheds itself
-        return Hnew - H
+        Hold = Gold + T*S
+        Hnew = Gnew + T*S
+        # Get the contribution to enthalpy by the mismatches itself\
+        return Hnew - Hold
     
     def calcMeltingTemperature(hairpin):
-        S = hairpin.stemEntropy + hairpin.loopEntropy
-        H = hairpin.stemEnthalpy + hairpin.mismatchEnthalpy
+        S = hairpin.hairEntropy
+        H = hairpin.hairEnthalpy
         Tm = H/S
-        return Tm
+        return Tm - 273
 
     def __str__(self):
         return f"Stem1: {self.stem1}\nLoop: {self.loop}\nStem2: {self.stem2}"
